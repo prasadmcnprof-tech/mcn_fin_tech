@@ -1,0 +1,95 @@
+{% extends 'requirements_app/base.html' %}
+
+{% block content %}
+
+<section class="landing-hero">
+    <div class="landing-hero-content">
+        <p class="eyebrow">Business • Tax • Compliance</p>
+
+        <h1>
+            Business registration, tax and compliance services for growing businesses.
+        </h1>
+
+        <p class="landing-subtitle">
+            Explore services, understand requirements, and create a service request online.
+        </p>
+
+        <div class="landing-actions">
+            <a class="btn" href="{% url 'service_list' %}">Explore Services</a>
+        </div>
+    </div>
+</section>
+
+<section class="section-heading minimal-heading">
+    <p class="eyebrow">Services</p>
+    <h2>Choose a service to get started</h2>
+</section>
+
+<div class="service-list">
+    {% for service in services %}
+        <div class="card service-card">
+            <p class="service-label">{{ service.category.name }}</p>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.short_description }}</p>
+
+            <div class="service-card-footer">
+                <span>From ₹{{ service.starting_price }}</span>
+                <a class="btn" href="{% url 'service_detail' service.slug %}">
+                    View Details
+                </a>
+            </div>
+        </div>
+    {% empty %}
+        <p>No services available. Run <code>python manage.py seed_services</code>.</p>
+    {% endfor %}
+</div>
+
+<section class="simple-info-grid">
+    <div class="simple-info-card">
+        <h3>Simple Request Flow</h3>
+        <p>Create a request for the selected service and track it from your dashboard.</p>
+    </div>
+
+    <div class="simple-info-card">
+        <h3>Document Upload</h3>
+        <p>Upload required documents securely against each customer request.</p>
+    </div>
+
+    <div class="simple-info-card">
+        <h3>Status Tracking</h3>
+        <p>View updates such as documents pending, under review, submitted or completed.</p>
+    </div>
+</section>
+
+<section class="how-it-works">
+    <p class="eyebrow">How it works</p>
+    <h2>Complete your request in simple steps</h2>
+
+    <div class="steps-grid">
+        <div class="step-card">
+            <span>1</span>
+            <h3>Choose Service</h3>
+            <p>Select the business, tax or compliance service you need.</p>
+        </div>
+
+        <div class="step-card">
+            <span>2</span>
+            <h3>Create Request</h3>
+            <p>Fill basic customer and business details.</p>
+        </div>
+
+        <div class="step-card">
+            <span>3</span>
+            <h3>Upload Documents</h3>
+            <p>Upload the required documents for review.</p>
+        </div>
+
+        <div class="step-card">
+            <span>4</span>
+            <h3>Track Progress</h3>
+            <p>Check status updates from your dashboard.</p>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

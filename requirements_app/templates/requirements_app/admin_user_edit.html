@@ -1,0 +1,1 @@
+{% extends 'requirements_app/base.html' %}{% block content %}<div class="form-card"><p class="eyebrow">Admin</p><h1>Edit User: {{ user_obj.username }}</h1><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Save User</button></form></div>{% endblock %}

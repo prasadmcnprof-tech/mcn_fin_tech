@@ -1,0 +1,1 @@
+{% extends 'requirements_app/base.html' %}{% block content %}<div class='form-card'><h1>Submit Enquiry</h1><form method='post'>{% csrf_token %}{{ form.as_p }}<button class='btn' type='submit'>Submit Enquiry</button></form></div>{% endblock %}

@@ -1,0 +1,1 @@
+{% extends 'requirements_app/base.html' %}{% block content %}<div class="form-card"><p class="eyebrow">Create Request</p><h1>{{ service.title }}</h1><p>Enter customer and business details to start this service request.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn" type="submit">Create Request</button></form></div>{% endblock %}
