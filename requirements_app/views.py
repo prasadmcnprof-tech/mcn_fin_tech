@@ -6,6 +6,18 @@ from django.contrib.auth.models import User
 from .models import Service, CustomerRequest
 from .forms import RegisterForm, CustomerRequestForm, RequestDocumentForm, StaffRequestEditForm, AdminUserEditForm
 
+from django.db import connection
+from django.http import HttpResponse
+
+def codeql_test(request):
+    username = request.GET.get("username", "")
+
+    with connection.cursor() as cursor:
+        query = "SELECT * FROM auth_user WHERE username = '%s'" % username
+        cursor.execute(query)
+
+    return HttpResponse("CodeQL test")
+
 def home(request):
     return render(request, "requirements_app/home.html", {"services": Service.objects.filter(is_active=True)[:6]})
 def about(request): return render(request, "requirements_app/about.html")
@@ -120,3 +132,6 @@ def admin_user_edit(request, user_id):
     else:
         form = AdminUserEditForm(instance=user_obj)
     return render(request, "requirements_app/admin_user_edit.html", {"form": form, "user_obj": user_obj})
+    
+
+
