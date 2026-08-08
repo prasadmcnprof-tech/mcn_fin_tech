@@ -1,0 +1,29 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+
+- checkout: self
+
+- script: |
+    echo "Building application"
+  displayName: Build
+
+- script: |
+    echo "Running unit tests"
+  displayName: Unit Tests
+
+- script: |
+    echo "Running SonarQube"
+  displayName: Code Quality
