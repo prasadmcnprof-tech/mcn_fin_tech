@@ -1,29 +1,19 @@
-trigger:
-  branches:
-    include:
-      - main
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
 
-pr:
-  autoCancel: true
-  branches:
-    include:
-      - main
+trigger:
+- main
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-
-- checkout: self
-
-- script: |
-    echo "Building application"
-  displayName: Build
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
 
 - script: |
-    echo "Running unit tests"
-  displayName: Unit Tests
-
-- script: |
-    echo "Running SonarQube"
-  displayName: Code Quality
+    echo Add other tasks to build, test, and deploy your project.
+    echo See https://aka.ms/yaml
+  displayName: 'Run a multi-line script'
