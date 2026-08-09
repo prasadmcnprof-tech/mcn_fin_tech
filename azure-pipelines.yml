@@ -1,19 +1,93 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - main
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  pythonVersion: '3.12'
+  sonarProjectKey: 'YOUR_SONAR_PROJECT_KEY'
+  sonarOrganization: 'YOUR_SONAR_ORGANIZATION'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
+# ---------------------------------------------------------
+# 1. Checkout source code
+# ---------------------------------------------------------
+- checkout: self
+  fetchDepth: 0
+
+# ---------------------------------------------------------
+# 2. Configure Python
+# ---------------------------------------------------------
+- task: UsePythonVersion@0
+  displayName: 'Use Python $(pythonVersion)'
+  inputs:
+    versionSpec: '$(pythonVersion)'
+    addToPath: true
+
+# ---------------------------------------------------------
+# 3. Install dependencies
+# ---------------------------------------------------------
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install coverage
+  displayName: 'Install dependencies'
+
+# ---------------------------------------------------------
+# 4. Prepare SonarQube Cloud
+# ---------------------------------------------------------
+- task: SonarCloudPrepare@4
+  displayName: 'Prepare SonarQube Cloud analysis'
+  inputs:
+    SonarCloud: 'sonar-service-connection'
+    organization: '$(sonarOrganization)'
+    scannerMode: 'cli'
+    configMode: 'manual'
+    cliProjectKey: '$(sonarProjectKey)'
+    cliProjectName: '$(sonarProjectKey)'
+    cliSources: '.'
+    extraProperties: |
+      sonar.python.version=3.12
+      sonar.python.coverage.reportPaths=coverage.xml
+      sonar.exclusions=**/migrations/**,**/__pycache__/**,**/venv/**,**/.venv/**
+      sonar.coverage.exclusions=manage.py,**/migrations/**
+
+# ---------------------------------------------------------
+# 5. Django validation
+# ---------------------------------------------------------
+- script: |
+    python manage.py check
+  displayName: 'Django system check'
+
+# ---------------------------------------------------------
+# 6. Run unit tests and generate coverage
+# ---------------------------------------------------------
+- script: |
+    coverage run manage.py test
+    coverage xml
+    coverage report
+  displayName: 'Run tests with coverage'
+
+# ---------------------------------------------------------
+# 7. Run SonarQube Cloud analysis
+# ---------------------------------------------------------
+- task: SonarCloudAnalyze@4
+  displayName: 'Run SonarQube Cloud analysis'
+
+# ---------------------------------------------------------
+# 8. Publish Quality Gate
+# ---------------------------------------------------------
+- task: SonarCloudPublish@4
+  displayName: 'Publish SonarQube Quality Gate'
+  inputs:
+    pollingTimeoutSec: '300'
