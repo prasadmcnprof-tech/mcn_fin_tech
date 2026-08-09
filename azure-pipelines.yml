@@ -3,34 +3,100 @@ trigger:
     include:
       - main
 
+pr:
+  autoCancel: true
+  branches:
+    include:
+      - main
+
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  pythonVersion: '3.12'
+  sonarProjectKey: 'YOUR_PROJECT_KEY'
+  sonarOrganization: 'YOUR_SONAR_ORG'
+
 steps:
 
+# ------------------------------------------------
+# 1. Checkout GitHub repository
+# ------------------------------------------------
 - checkout: self
+  fetchDepth: 0
 
+# ------------------------------------------------
+# 2. Configure Python
+# ------------------------------------------------
+- task: UsePythonVersion@0
+  displayName: 'Use Python $(pythonVersion)'
+  inputs:
+    versionSpec: '$(pythonVersion)'
+    addToPath: true
+
+# ------------------------------------------------
+# 3. Install dependencies
+# ------------------------------------------------
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install pytest pytest-cov
+  displayName: 'Install dependencies'
+
+# ------------------------------------------------
+# 4. Prepare SonarQube Cloud analysis
+# ------------------------------------------------
 - task: SonarCloudPrepare@4
+  displayName: 'Prepare SonarQube Cloud analysis'
   inputs:
     SonarCloud: 'sonar-service-connection'
-    organization: 'your-sonar-org'
+    organization: '$(sonarOrganization)'
     scannerMode: 'cli'
     configMode: 'manual'
-    cliProjectKey: 'mcn-fin-tech'
-    cliProjectName: 'mcn-fin-tech'
+    cliProjectKey: '$(sonarProjectKey)'
+    cliProjectName: '$(sonarProjectKey)'
+    cliSources: '.'
+    extraProperties: |
+      sonar.python.version=3.12
+      sonar.python.coverage.reportPaths=coverage.xml
+      sonar.exclusions=**/migrations/**,**/__pycache__/**,**/venv/**,**/.venv/**
+      sonar.coverage.exclusions=manage.py,**/migrations/**
 
+# ------------------------------------------------
+# 5. Run Django checks
+# ------------------------------------------------
 - script: |
-    pip install -r requirements.txt
-  displayName: Install dependencies
+    python manage.py check
+  displayName: 'Django system checks'
 
+# ------------------------------------------------
+# 6. Run tests and generate coverage.xml
+# ------------------------------------------------
 - script: |
-    pytest --cov=. --cov-report=xml
-  displayName: Run unit tests
+    pytest --cov=. --cov-report=xml --cov-report=term
+  displayName: 'Run tests with coverage'
 
+# ------------------------------------------------
+# 7. Run SonarQube analysis
+# ------------------------------------------------
 - task: SonarCloudAnalyze@4
-  displayName: Run SonarQube analysis
+  displayName: 'Run SonarQube Cloud analysis'
 
+# ------------------------------------------------
+# 8. Publish SonarQube Quality Gate
+# ------------------------------------------------
 - task: SonarCloudPublish@4
+  displayName: 'Publish SonarQube Quality Gate'
   inputs:
     pollingTimeoutSec: '300'
-  displayName: Publish Quality Gate
+
+# ------------------------------------------------
+# 9. Publish test results - optional but useful
+# ------------------------------------------------
+- task: PublishTestResults@2
+  displayName: 'Publish test results'
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFormat: 'JUnit'
+    testResultsFiles: '**/pytest-results.xml'
+    failTaskOnFailedTests: true
