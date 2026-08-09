@@ -3,11 +3,6 @@ trigger:
     include:
       - main
 
-pr:
-  branches:
-    include:
-      - main
-
 pool:
   vmImage: ubuntu-latest
 
@@ -15,30 +10,27 @@ steps:
 
 - checkout: self
 
-# 1. Prepare Sonar
-- task: SonarCloudPrepare@X
+- task: SonarCloudPrepare@4
   inputs:
     SonarCloud: 'sonar-service-connection'
-    organization: 'your-org'
+    organization: 'your-sonar-org'
     scannerMode: 'cli'
     configMode: 'manual'
     cliProjectKey: 'mcn-fin-tech'
     cliProjectName: 'mcn-fin-tech'
 
-# 2. Install dependencies
 - script: |
     pip install -r requirements.txt
   displayName: Install dependencies
 
-# 3. Run tests + coverage
 - script: |
     pytest --cov=. --cov-report=xml
-  displayName: Unit tests
+  displayName: Run unit tests
 
-# 4. Run Sonar analysis
-- task: SonarCloudAnalyze@X
+- task: SonarCloudAnalyze@4
+  displayName: Run SonarQube analysis
 
-# 5. Publish Quality Gate
-- task: SonarCloudPublish@X
+- task: SonarCloudPublish@4
   inputs:
     pollingTimeoutSec: '300'
+  displayName: Publish Quality Gate
