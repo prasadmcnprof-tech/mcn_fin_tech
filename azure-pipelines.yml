@@ -1,19 +1,44 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
 
 pool:
   vmImage: ubuntu-latest
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
 
+- checkout: self
+
+# 1. Prepare Sonar
+- task: SonarCloudPrepare@X
+  inputs:
+    SonarCloud: 'sonar-service-connection'
+    organization: 'your-org'
+    scannerMode: 'cli'
+    configMode: 'manual'
+    cliProjectKey: 'mcn-fin-tech'
+    cliProjectName: 'mcn-fin-tech'
+
+# 2. Install dependencies
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    pip install -r requirements.txt
+  displayName: Install dependencies
+
+# 3. Run tests + coverage
+- script: |
+    pytest --cov=. --cov-report=xml
+  displayName: Unit tests
+
+# 4. Run Sonar analysis
+- task: SonarCloudAnalyze@X
+
+# 5. Publish Quality Gate
+- task: SonarCloudPublish@X
+  inputs:
+    pollingTimeoutSec: '300'
